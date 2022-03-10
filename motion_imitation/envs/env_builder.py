@@ -36,6 +36,8 @@ from motion_imitation.robots import a1
 from motion_imitation.robots import a1_robot
 from motion_imitation.robots import robot_config
 
+from motion_imitation.envs.utilities import minitaur_push_randomizer
+
 
 def build_env(task,
               motion_files=None,
@@ -101,8 +103,10 @@ def build_env(task,
 
   randomizers = []
   if enable_randomizer:
-    randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
-    randomizers.append(randomizer)
+    # randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
+    # randomizers.append(randomizer)
+    force = minitaur_push_randomizer.MinitaurPushRandomizer()
+    randomizers.append(force)
 
   env = locomotion_gym_env.LocomotionGymEnv(
       gym_config=gym_config,

@@ -209,7 +209,8 @@ def main():
     output_dir = os.path.join(args.output_dir,
                               time.strftime("%Y-%m-%d_%H%M_%S", time.localtime()) + suf)
 
-    enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
+    # enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
+    enable_env_rand = ENABLE_ENV_RANDOMIZER 
 
     env = env_builder.build_env("reset" if args.train_reset else "imitate",
                                 motion_files=[find_file(args.motion_file)],

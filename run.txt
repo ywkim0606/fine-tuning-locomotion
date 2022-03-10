@@ -1,0 +1,1 @@
+python motion_imitation/run_sac.py --mode test --motion_file motion_imitation/data/motions/pace.txt --model_file motion_imitation/data/policies/pace.ckpt --visualize --num_test_episodes 10
