@@ -62,6 +62,42 @@
         <box size="0.05 0.125 0.06"/>
       </geometry>
     </collision>
+    <visual>
+      <origin rpy="0 0.698 0" xyz="-0.192 .097 0.161"/>
+      <geometry>
+        <box size="0.5 0.025 0.025"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0.698 0" xyz="-0.192 .097 0.161"/>
+      <geometry>
+        <box size="0.5 0.025 0.025"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0.698 0" xyz="-0.192 -.097 0.161"/>
+      <geometry>
+        <box size="0.5 0.025 0.025"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0.698 0" xyz="-0.192 -.097 0.161"/>
+      <geometry>
+        <box size="0.5 0.025 0.025"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0.698 0" xyz="-0.383 0 0.321"/>
+      <geometry>
+        <box size="0.025 0.2 0.025"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0.698 0" xyz="-0.383 0 0.321"/>
+      <geometry>
+        <box size="0.025 0.2 0.025"/>
+      </geometry>
+    </collision>
   </link>
   <joint name="imu_joint" type="fixed">
     <parent link="trunk"/>
