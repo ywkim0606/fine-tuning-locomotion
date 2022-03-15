@@ -175,6 +175,8 @@ def main():
     arg_parser.add_argument("--realistic_sim", dest="realistic_sim", action="store_true", default=False)
     arg_parser.add_argument("--mocap_grpc_server", dest="mocap_grpc_server", type=str, default=None)
     arg_parser.add_argument("--no_env_logging", dest="env_logging", action="store_false", default=True)
+    # RLR8803 args
+    arg_parser.add_argument("--use_push_randomizer", dest="use_push_randomizer", action="store_true", default=False)
 
     args = arg_parser.parse_args()
 
@@ -211,6 +213,7 @@ def main():
                               time.strftime("%Y-%m-%d_%H%M_%S", time.localtime()) + suf)
 
     enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
+    enable_push_randomizer = args.use_push_randomizer
     # enable_env_rand = ENABLE_ENV_RANDOMIZER 
 
     env = env_builder.build_env("reset" if args.train_reset else "imitate",
@@ -221,7 +224,9 @@ def main():
                                 enable_rendering=args.visualize,
                                 use_real_robot=args.real,
                                 reset_at_current_position=args.multitask,
-                                realistic_sim=args.realistic_sim)
+                                realistic_sim=args.realistic_sim,
+                                enable_push_randomizer=enable_push_randomizer,
+                                )
     if args.env_logging:
       env = logging_wrapper.LoggingWrapper(env, output_dir,
                                            args.mocap_grpc_server)
