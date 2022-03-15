@@ -146,6 +146,7 @@ class RLAgent(abc.ABC):
 
         total_samples = 0
         print("Training")
+        test_rewards = []
 
         while (total_samples < max_samples):
             update_normalizer = self._enable_normalizer_update(total_samples)
@@ -187,9 +188,15 @@ class RLAgent(abc.ABC):
                 self._update_normalizers()
 
             if (iter % output_iters == 0):
+                # test_return, test_path_count = self._rollout_test(local_test_episodes, print_info=False)
                 test_return, test_path_count = self._rollout_test(local_test_episodes, print_info=False)
                 test_return = mpi_util.reduce_mean(test_return)
                 total_test_path_count += mpi_util.reduce_sum(test_path_count)
+
+                test_rewards.append((total_samples,test_return))
+                fp = os.path.join(model_dir, 'rewards.npy')
+                with open(fp, 'w') as f:
+                    np.save(f, np.array(test_rewards))
 
                 self._log({
                     "Test_Return": test_return,
@@ -237,6 +244,7 @@ class RLAgent(abc.ABC):
         return
 
     def load_model(self, in_path):
+        # print('hello: ', in_path)
         self._saver.restore(self._sess, in_path)
         # load in pickled buffer
         try:

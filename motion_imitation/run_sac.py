@@ -37,6 +37,7 @@ from safe_outdoor import resetters
 from safe_outdoor.learning import yielding_sac_agent
 
 ENABLE_ENV_RANDOMIZER = True
+# ENABLE_ENV_RANDOMIZER = False
 
 def find_file(filename):
     if os.path.isfile(filename):
@@ -161,7 +162,7 @@ def main():
     arg_parser.add_argument("--getup_model_file", dest="getup_model_file", type=str, default="motion_imitation/data/policies/model-004050.ckpt")
     arg_parser.add_argument("--total_timesteps", dest="total_timesteps", type=int, default=2e8)
     arg_parser.add_argument("--int_save_freq", dest="int_save_freq", type=int, default=50) # save intermediate model every n policy steps
-    arg_parser.add_argument("--gpu", dest="gpu", default="")
+    arg_parser.add_argument("--gpu", dest="gpu", default="0")
     arg_parser.add_argument("--train_reset", dest="train_reset", action="store_true", default=False)
     arg_parser.add_argument("--finetune", dest="finetune", action="store_true", default=False)
     arg_parser.add_argument("--use_redq", dest="use_redq", action="store_true", default=False)
@@ -209,8 +210,8 @@ def main():
     output_dir = os.path.join(args.output_dir,
                               time.strftime("%Y-%m-%d_%H%M_%S", time.localtime()) + suf)
 
-    # enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
-    enable_env_rand = ENABLE_ENV_RANDOMIZER 
+    enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
+    # enable_env_rand = ENABLE_ENV_RANDOMIZER 
 
     env = env_builder.build_env("reset" if args.train_reset else "imitate",
                                 motion_files=[find_file(args.motion_file)],

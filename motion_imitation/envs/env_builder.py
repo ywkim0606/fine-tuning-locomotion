@@ -103,8 +103,8 @@ def build_env(task,
 
   randomizers = []
   if enable_randomizer:
-    # randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
-    # randomizers.append(randomizer)
+    randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
+    randomizers.append(randomizer)
     force = minitaur_push_randomizer.MinitaurPushRandomizer()
     randomizers.append(force)
 

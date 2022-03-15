@@ -1,1 +1,13 @@
-python motion_imitation/run_sac.py --mode test --motion_file motion_imitation/data/motions/pace.txt --model_file motion_imitation/data/policies/pace.ckpt --visualize --num_test_episodes 10
+python motion_imitation/run_sac.py \
+--mode train \
+--use_redq \
+--motion_file motion_imitation/data/motions/pace.txt \
+--int_save_freq 10 \
+
+Baseline 돌리는 방법: motion_imitation/envs/env/builder.py 
+108, 109줄 comment out 하고 위 커맨드 똑같이 돌리면 됩니다!
+
+
+
+
+
