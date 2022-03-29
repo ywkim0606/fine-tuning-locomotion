@@ -195,7 +195,7 @@ class RLAgent(abc.ABC):
 
                 test_rewards.append((total_samples,test_return))
                 fp = os.path.join(model_dir, 'rewards.npy')
-                with open(fp, 'w') as f:
+                with open(fp, 'wb') as f:
                     np.save(f, np.array(test_rewards))
 
                 self._log({

@@ -48,7 +48,9 @@ def build_env(task,
               enable_rendering=False,
               reset_at_current_position=False,
               use_real_robot=False,
-              realistic_sim=False):
+              realistic_sim=False,
+              enable_push_randomizer=False
+              ):
   assert len(motion_files) > 0
 
   if task == "reset":
@@ -106,9 +108,13 @@ def build_env(task,
   if enable_randomizer:
     randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
     randomizers.append(randomizer)
-    force = minitaur_push_randomizer.MinitaurPushRandomizer()
-    randomizers.append(force)
-    push = body_push_randomizer.BodyPushRandomizer()
+    if enable_push_randomizer:
+      print("-*-"*20)
+      print("Push Randomizer ON!")
+      print("-*-"*20)
+      force = minitaur_push_randomizer.MinitaurPushRandomizer()
+      randomizers.append(force)
+      push = body_push_randomizer.BodyPushRandomizer()
     randomizers.append(push)
 
   env = locomotion_gym_env.LocomotionGymEnv(
