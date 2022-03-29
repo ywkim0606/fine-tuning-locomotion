@@ -18,25 +18,19 @@ from motion_imitation.envs.utilities import env_randomizer_base
 from motion_imitation.robots.minitaur import Minitaur
 import csv
 
-# _PERTURBATION_START_STEP = 100
-# _PERTURBATION_INTERVAL_STEPS = 200
-# _PERTURBATION_DURATION_STEPS = 10
-# _HORIZONTAL_FORCE_UPPER_BOUND = 120
-# _HORIZONTAL_FORCE_LOWER_BOUND = 240
+_PERTURBATION_START_STEP = 100
+_PERTURBATION_INTERVAL_STEPS = 100
+_PERTURBATION_DURATION_STEPS = 5
+_HORIZONTAL_FORCE_UPPER_BOUND = 3000
+_HORIZONTAL_FORCE_LOWER_BOUND = 800
 # _VERTICAL_FORCE_UPPER_BOUND = 300
 # _VERTICAL_FORCE_LOWER_BOUND = 500
-
-_PERTURBATION_START_STEP = 100
-_PERTURBATION_INTERVAL_STEPS = 200
-_PERTURBATION_DURATION_STEPS = 100
-_HORIZONTAL_FORCE_UPPER_BOUND = 120000
-_HORIZONTAL_FORCE_LOWER_BOUND = 24000
-_VERTICAL_FORCE_UPPER_BOUND = 300000
-_VERTICAL_FORCE_LOWER_BOUND = 50000
+_VERTICAL_FORCE_UPPER_BOUND = 500
+_VERTICAL_FORCE_LOWER_BOUND = 0
 
 
 @gin.configurable
-class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
+class BodyPushRandomizer(env_randomizer_base.EnvRandomizerBase):
   """Applies a random impulse to the base of Minitaur."""
 
   def __init__(
@@ -107,22 +101,15 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
     if env.env_step_counter % self._perturbation_interval_steps == 0:
       # print(env.env_step_counter)
       self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
-      # horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
-      #                                                self._horizontal_force_bound[1])
-      horizontal_force_magnitude = 1000
-      x_acc, y_acc, z_acc = self.xyz_acc[env.env_step_counter+14000]
-      theta = -math.pi/2 #np.random.uniform(0, 2 * math.pi)
-      vertical_force_magnitude = 0
-      # vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
-      #                                              self._vertical_force_bound[1])
-      self._applied_force = 960 * np.array([y_acc, z_acc, x_acc])
-      # self._applied_force = horizontal_force_magnitude * np.array(
-          # [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
-      #print('FORCE: ', self._applied_force)
-      # print(robot.GetMotorTorques())
-      # print('baselinkid: ', base_link_ids)
-      # print('linkindex: ', self._applied_link_id)
-      # print('flags: ', env.pybullet_client.LINK_FRAME)
+      horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
+                                                     self._horizontal_force_bound[1])
+      print('horizontal: ', horizontal_force_magnitude)
+      theta = np.random.uniform(0, 2 * math.pi)
+      vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
+                                                   self._vertical_force_bound[1])
+      print('vertical: ', vertical_force_magnitude)
+      self._applied_force = horizontal_force_magnitude * np.array(
+          [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
 
     if (env.env_step_counter % self._perturbation_interval_steps <
         self._perturbation_duration_steps) and (env.env_step_counter >=
