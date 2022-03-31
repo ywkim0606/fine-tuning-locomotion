@@ -115,7 +115,7 @@ def build_env(task,
       force = minitaur_push_randomizer.MinitaurPushRandomizer()
       randomizers.append(force)
       push = body_push_randomizer.BodyPushRandomizer()
-    randomizers.append(push)
+      randomizers.append(push)
 
   env = locomotion_gym_env.LocomotionGymEnv(
       gym_config=gym_config,
