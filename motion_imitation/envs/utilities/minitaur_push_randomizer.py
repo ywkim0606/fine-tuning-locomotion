@@ -68,7 +68,7 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
                                   [_VERTICAL_FORCE_LOWER_BOUND, _VERTICAL_FORCE_UPPER_BOUND])
     self._perturbation_parameter_dict = None
     self.myenv = None
-    self.xyz_acc = self.read_csv('ab15.csv') # training with ab13.csv
+    self.xyz_acc = self.read_csv('ab13.csv') # training with ab13.csv
   
   def read_csv(self, filename):
     with open(filename, 'r') as csvfile:

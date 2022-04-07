@@ -49,7 +49,8 @@ def build_env(task,
               reset_at_current_position=False,
               use_real_robot=False,
               realistic_sim=False,
-              enable_push_randomizer=False
+              enable_push_randomizer=False, 
+              enable_body_push=False
               ):
   assert len(motion_files) > 0
 
@@ -110,10 +111,14 @@ def build_env(task,
     randomizers.append(randomizer)
     if enable_push_randomizer:
       print("-*-"*20)
-      print("Push Randomizer ON!")
+      print("Gait Randomizer ON!")
       print("-*-"*20)
       force = minitaur_push_randomizer.MinitaurPushRandomizer()
       randomizers.append(force)
+    if enable_body_push:
+      print("-*-"*20)
+      print("Push Randomizer ON!")
+      print("-*-"*20)
       push = body_push_randomizer.BodyPushRandomizer()
       randomizers.append(push)
 
