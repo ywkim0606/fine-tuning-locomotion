@@ -228,7 +228,7 @@ def main():
                                 reset_at_current_position=args.multitask,
                                 realistic_sim=args.realistic_sim,
                                 enable_push_randomizer=enable_push_randomizer,
-                                enable_body_push=use_body_push,
+                                enable_body_push=enable_body_push,
                                 )
     if args.env_logging:
       env = logging_wrapper.LoggingWrapper(env, output_dir,
