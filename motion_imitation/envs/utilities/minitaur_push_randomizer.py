@@ -26,7 +26,7 @@ import csv
 # _VERTICAL_FORCE_UPPER_BOUND = 300
 # _VERTICAL_FORCE_LOWER_BOUND = 500
 
-_PERTURBATION_START_STEP = 100
+_PERTURBATION_START_STEP = 0
 _PERTURBATION_INTERVAL_STEPS = 200
 _PERTURBATION_DURATION_STEPS = 100
 _HORIZONTAL_FORCE_UPPER_BOUND = 120000
@@ -68,7 +68,7 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
                                   [_VERTICAL_FORCE_LOWER_BOUND, _VERTICAL_FORCE_UPPER_BOUND])
     self._perturbation_parameter_dict = None
     self.myenv = None
-    self.xyz_acc = self.read_csv('ab13.csv') # training with ab13.csv
+    self.xyz_acc = self.read_csv('ab15.csv') # training with ab13.csv
   
   def read_csv(self, filename):
     with open(filename, 'r') as csvfile:
@@ -102,20 +102,13 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
     """
     robot = self.myenv
     base_link_ids = robot.chassis_link_ids
+    print('step: ', env.env_step_counter)
     # print("********************", base_link_ids)
     # env_step_counter --> step_counter
-    if env.env_step_counter % self._perturbation_interval_steps == 0:
       # print(env.env_step_counter)
-      self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
-      # horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
-      #                                                self._horizontal_force_bound[1])
-      horizontal_force_magnitude = 1000
-      x_acc, y_acc, z_acc = self.xyz_acc[env.env_step_counter+14000]
-      theta = -math.pi/2 #np.random.uniform(0, 2 * math.pi)
-      vertical_force_magnitude = 0
-      # vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
-      #                                              self._vertical_force_bound[1])
-      self._applied_force = 960 * np.array([y_acc, z_acc, x_acc])
+    self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
+    x_acc, y_acc, z_acc = self.xyz_acc[env.env_step_counter]
+    self._applied_force = 960 * np.array([y_acc, z_acc, x_acc])
       # self._applied_force = horizontal_force_magnitude * np.array(
           # [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
       #print('FORCE: ', self._applied_force)
@@ -124,21 +117,13 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
       # print('linkindex: ', self._applied_link_id)
       # print('flags: ', env.pybullet_client.LINK_FRAME)
 
-    if (env.env_step_counter % self._perturbation_interval_steps <
-        self._perturbation_duration_steps) and (env.env_step_counter >=
-                                                self._perturbation_start_step):
-      # Parameter of pybullet_client.applyExternalForce()
-      # print('apply!')
-      self._perturbation_parameter_dict = dict(#objectUniqueId=env.minitaur.quadruped,
-                                              objectUniqueId=robot.quadruped,
-                                               linkIndex=self._applied_link_id,
-                                               forceObj=self._applied_force,
-                                               posObj=[0.0, 0.0, 0.0],
-                                               flags=env.pybullet_client.LINK_FRAME)
-      env.pybullet_client.applyExternalForce(**self._perturbation_parameter_dict)
-    else:
-      # print('nothing')
-      self._perturbation_parameter_dict = None
+    self._perturbation_parameter_dict = dict(#objectUniqueId=env.minitaur.quadruped,
+                                            objectUniqueId=robot.quadruped,
+                                              linkIndex=self._applied_link_id,
+                                              forceObj=self._applied_force,
+                                              posObj=[0.0, 0.0, 0.0],
+                                              flags=env.pybullet_client.LINK_FRAME)
+    env.pybullet_client.applyExternalForce(**self._perturbation_parameter_dict)
 
   def randomize_sub_step(self, env, sub_step_index, num_sub_steps):
     """Randomize simulation steps per sub steps (simulation step).

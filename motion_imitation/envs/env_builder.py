@@ -105,10 +105,13 @@ def build_env(task,
         enable_rand_init_time=enable_randomizer,
         warmup_time=.3)
 
+  enable_randomizer = True
+  enable_body_push = True
+  enable_push_randomizer = True
   randomizers = []
   if enable_randomizer:
     randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
-    randomizers.append(randomizer)
+    # randomizers.append(randomizer)
     if enable_push_randomizer:
       print("-*-"*20)
       print("Gait Randomizer ON!")

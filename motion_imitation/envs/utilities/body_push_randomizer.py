@@ -62,7 +62,6 @@ class BodyPushRandomizer(env_randomizer_base.EnvRandomizerBase):
                                   [_VERTICAL_FORCE_LOWER_BOUND, _VERTICAL_FORCE_UPPER_BOUND])
     self._perturbation_parameter_dict = None
     self.myenv = None
-    self.xyz_acc = self.read_csv('ab13.csv') # training with ab13.csv, eval with ab15
   
   def read_csv(self, filename):
     with open(filename, 'r') as csvfile:
@@ -95,37 +94,46 @@ class BodyPushRandomizer(env_randomizer_base.EnvRandomizerBase):
       env: The Minitaur gym environment to be randomized.
     """
     robot = self.myenv
-    base_link_ids = robot.chassis_link_ids
-    # print("********************", base_link_ids)
-    # env_step_counter --> step_counter
-    if env.env_step_counter % self._perturbation_interval_steps == 0:
-      # print(env.env_step_counter)
-      self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
-      horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
-                                                     self._horizontal_force_bound[1])
-      print('horizontal: ', horizontal_force_magnitude)
-      theta = np.random.uniform(0, 2 * math.pi)
-      vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
-                                                   self._vertical_force_bound[1])
-      print('vertical: ', vertical_force_magnitude)
-      self._applied_force = horizontal_force_magnitude * np.array(
-          [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
+    t = robot.GetMotorTorques()
+    # print(t)
 
-    if (env.env_step_counter % self._perturbation_interval_steps <
-        self._perturbation_duration_steps) and (env.env_step_counter >=
-                                                self._perturbation_start_step):
-      # Parameter of pybullet_client.applyExternalForce()
-      # print('apply!')
-      self._perturbation_parameter_dict = dict(#objectUniqueId=env.minitaur.quadruped,
-                                              objectUniqueId=robot.quadruped,
-                                               linkIndex=self._applied_link_id,
-                                               forceObj=self._applied_force,
-                                               posObj=[0.0, 0.0, 0.0],
-                                               flags=env.pybullet_client.LINK_FRAME)
-      env.pybullet_client.applyExternalForce(**self._perturbation_parameter_dict)
-    else:
-      # print('nothing')
-      self._perturbation_parameter_dict = None
+    with open('torque_perturb.csv', 'a') as f:
+      writer = csv.writer(f)
+      writer.writerow(t)
+
+
+
+    # base_link_ids = robot.chassis_link_ids
+    # # print("********************", base_link_ids)
+    # # env_step_counter --> step_counter
+    # if env.env_step_counter % self._perturbation_interval_steps == 0:
+    #   # print(env.env_step_counter)
+    #   self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
+    #   horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
+    #                                                  self._horizontal_force_bound[1])
+    #   print('horizontal: ', horizontal_force_magnitude)
+    #   theta = np.random.uniform(0, 2 * math.pi)
+    #   vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
+    #                                                self._vertical_force_bound[1])
+    #   print('vertical: ', vertical_force_magnitude)
+    #   self._applied_force = horizontal_force_magnitude * np.array(
+    #       [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
+
+    # if (env.env_step_counter % self._perturbation_interval_steps <
+    #     self._perturbation_duration_steps) and (env.env_step_counter >=
+    #                                             self._perturbation_start_step):
+    #   # Parameter of pybullet_client.applyExternalForce()
+    #   # print('apply!')
+    #   self._perturbation_parameter_dict = dict(#objectUniqueId=env.minitaur.quadruped,
+    #                                           objectUniqueId=robot.quadruped,
+    #                                            linkIndex=self._applied_link_id,
+    #                                            forceObj=self._applied_force,
+    #                                            posObj=[0.0, 0.0, 0.0],
+    #                                            flags=env.pybullet_client.LINK_FRAME)
+    #   env.pybullet_client.applyExternalForce(**self._perturbation_parameter_dict)
+    # else:
+    #   # print('nothing')
+    #   self._perturbation_parameter_dict = None
 
   def randomize_sub_step(self, env, sub_step_index, num_sub_steps):
     """Randomize simulation steps per sub steps (simulation step).
