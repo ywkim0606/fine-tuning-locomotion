@@ -68,7 +68,7 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
                                   [_VERTICAL_FORCE_LOWER_BOUND, _VERTICAL_FORCE_UPPER_BOUND])
     self._perturbation_parameter_dict = None
     self.myenv = None
-    self.xyz_acc = self.read_csv('ab13.csv') # training with ab13.csv
+    self.xyz_acc = self.read_csv('ab15.csv') # training with ab13.csv
   
   def read_csv(self, filename):
     with open(filename, 'r') as csvfile:
@@ -110,7 +110,7 @@ class MinitaurPushRandomizer(env_randomizer_base.EnvRandomizerBase):
       # horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
       #                                                self._horizontal_force_bound[1])
       horizontal_force_magnitude = 1000
-      x_acc, y_acc, z_acc = self.xyz_acc[env.env_step_counter+14000]
+      x_acc, y_acc, z_acc = self.xyz_acc[env.env_step_counter]
       theta = -math.pi/2 #np.random.uniform(0, 2 * math.pi)
       vertical_force_magnitude = 0
       # vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],

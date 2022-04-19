@@ -44,6 +44,7 @@ def build_env(task,
               motion_files=None,
               num_parallel_envs=0,
               mode="train",
+              finetune=False,
               enable_randomizer=True,
               enable_rendering=False,
               reset_at_current_position=False,
@@ -90,7 +91,8 @@ def build_env(task,
   sensors = [
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.MotorAngleSensor(num_motors=num_motors), num_history=3),
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.IMUSensor(), num_history=3),
-      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=num_motors), num_history=3)
+      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.PerturbationSensor(mode=mode, finetune=finetune), num_history=3), # lstm, shape: (1,)
+      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=num_motors), num_history=3) # shape: num_motors
   ]
 
   if task == "reset":
@@ -103,8 +105,13 @@ def build_env(task,
         tar_frame_steps=[1, 2, 10, 30],
         ref_state_init_prob=ref_state_init_prob,
         enable_rand_init_time=enable_randomizer,
-        warmup_time=.3)
+        warmup_time=.3,
+        _num_motors=num_motors,
+        )
 
+  # enable_randomizer=True
+  # enable_push_randomizer=True
+  # enable_body_push=False
   randomizers = []
   if enable_randomizer:
     randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)

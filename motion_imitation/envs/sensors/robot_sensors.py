@@ -27,6 +27,12 @@ os.sys.path.insert(0, parentdir)
 
 import numpy as np
 import typing
+import pandas as pd
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+
+import perturbation_classifier
 
 from robots import minitaur_pose_utils
 from motion_imitation.envs.sensors import sensor
@@ -34,6 +40,8 @@ from motion_imitation.envs.sensors import sensor
 _ARRAY = typing.Iterable[float] #pylint: disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY] #pylint: disable=invalid-name
 _DATATYPE_LIST = typing.Iterable[typing.Any] #pylint: disable=invalid-name
+
+
 
 
 class MotorAngleSensor(sensor.BoxSpaceSensor):
@@ -377,3 +385,85 @@ class PoseSensor(sensor.BoxSpaceSensor):
   def _get_observation(self) -> _ARRAY:
     return np.concatenate((self._robot.GetBasePosition()[:2],
                            (self._robot.GetTrueBaseRollPitchYaw()[2],)))
+
+class LSTM1(nn.Module):
+    def __init__(self, num_classes, input_size, hidden_size, num_layers, seq_length):
+        super(LSTM1, self).__init__()
+        self.num_classes = num_classes #number of classes
+        self.num_layers = num_layers #number of layers
+        self.input_size = input_size #input size
+        self.hidden_size = hidden_size #hidden state
+        self.seq_length = seq_length #sequence length
+
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                          num_layers=num_layers, batch_first=True) #lstm
+        self.fc_1 =  nn.Linear(hidden_size, 128) #fully connected 1
+        self.fc = nn.Linear(128, num_classes) #fully connected last layer
+
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self,x):
+        h_0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size)) #hidden state
+        c_0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size)) #internal state
+        # Propagate input through LSTM
+        output, (hn, cn) = self.lstm(x, (h_0, c_0)) #lstm with input, hidden, and internal state
+        hn = hn.view(-1, self.hidden_size) #reshaping the data for Dense layer next
+        out = self.relu(hn)
+        out = self.fc_1(out) #first Dense
+        out = self.relu(out) #relu
+        out = self.fc(out) #Final Output
+        out = self.sigmoid(out)
+        return out
+
+class PerturbationSensor(sensor.BoxSpaceSensor):
+  """A sensor that reads the external perturbations to the robot {0, 1}
+  """
+
+  def __init__(self,
+               finetune: bool,
+               mode: str,
+               lower_bound: _FLOAT_OR_ARRAY = 0,
+               upper_bound: _FLOAT_OR_ARRAY = 1,
+               name: typing.Text = "Perturbation",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    
+    self.lstm = perturbation_classifier.lstm(os.path.join(parentdir, 'lstm_state_dict.pth'))
+    # self.lstm = perturbation_classifier.lstm('motion_imitation/update_lstm.pth')
+    # self.lstm = torch.load(os.path.join(parentdir, 'update_lstm.pth'))
+    self.finetune = finetune
+    self.mode = mode
+    """Constructs PerturbationSensor.   
+
+    Args:
+      lower_bound: the lower bound of the pose of the robot.
+      upper_bound: the upper bound of the pose of the robot.
+      name: the name of the sensor.
+      dtype: data type of sensor value.
+    """
+    super(PerturbationSensor, self).__init__(
+        name=name,
+        shape=(1,),  # 1 or 0
+        lower_bound=lower_bound,
+        upper_bound=upper_bound,
+        dtype=dtype)
+
+  def _get_observation(self) -> _ARRAY:
+    if self.mode == "train" and not self.finetune:
+      return np.array([0])
+    elif self.mode == "test" or self.finetune:
+      #thresholding
+      threshold = torch.tensor([0.5])
+      # self.GetTrueMotorTorques() has to be a pytorch tensor
+      # shape torch.Size([1, 1, 12])
+      input_joints = torch.tensor(self._robot.GetTrueMotorTorques().astype(np.float32))
+      input_joints = torch.reshape(input_joints, (1,1,input_joints.shape[0]))
+      # output = self.lstm(input_joints)
+      output = self.lstm(input_joints) # temporary solution
+      result = ((output > threshold).float()*1).flatten()
+
+      return result # output 0 or 1
+      # return self.lstm(self.GetTrueMotorTorques()).cpu().detach().numpy()
+    else:
+      print("noooooo not here")
+      raise NotImplementedError

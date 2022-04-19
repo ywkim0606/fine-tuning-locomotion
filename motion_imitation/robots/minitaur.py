@@ -1235,6 +1235,9 @@ class Minitaur(object):
         self.quadruped, self._motor_id_list)
     self._base_position, orientation = (
         self._pybullet_client.getBasePositionAndOrientation(self.quadruped))
+    
+    # self._gate_perturbation = self.lstm(self.GetTrueMotorTorques()) {0,1}
+
     # Computes the relative orientation relative to the robot's
     # initial_orientation.
     _, self._base_orientation = self._pybullet_client.multiplyTransforms(

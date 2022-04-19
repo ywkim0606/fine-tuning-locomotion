@@ -62,7 +62,7 @@ class BodyPushRandomizer(env_randomizer_base.EnvRandomizerBase):
                                   [_VERTICAL_FORCE_LOWER_BOUND, _VERTICAL_FORCE_UPPER_BOUND])
     self._perturbation_parameter_dict = None
     self.myenv = None
-    self.xyz_acc = self.read_csv('ab13.csv') # training with ab13.csv, eval with ab15
+    self.xyz_acc = self.read_csv('ab15.csv') # training with ab13.csv, eval with ab15
   
   def read_csv(self, filename):
     with open(filename, 'r') as csvfile:
@@ -103,11 +103,11 @@ class BodyPushRandomizer(env_randomizer_base.EnvRandomizerBase):
       self._applied_link_id = base_link_ids[np.random.randint(0, len(base_link_ids))]
       horizontal_force_magnitude = np.random.uniform(self._horizontal_force_bound[0],
                                                      self._horizontal_force_bound[1])
-      print('horizontal: ', horizontal_force_magnitude)
+      # print('horizontal: ', horizontal_force_magnitude)
       theta = np.random.uniform(0, 2 * math.pi)
       vertical_force_magnitude = np.random.uniform(self._vertical_force_bound[0],
                                                    self._vertical_force_bound[1])
-      print('vertical: ', vertical_force_magnitude)
+      # print('vertical: ', vertical_force_magnitude)
       self._applied_force = horizontal_force_magnitude * np.array(
           [math.cos(theta), math.sin(theta), 0]) + np.array([0, 0, -vertical_force_magnitude])
 

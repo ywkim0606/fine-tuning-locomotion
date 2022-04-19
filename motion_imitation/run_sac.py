@@ -216,12 +216,12 @@ def main():
     enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
     enable_push_randomizer = args.use_push_randomizer
     enable_body_push = args.use_body_push
-    # enable_env_rand = ENABLE_ENV_RANDOMIZER 
 
     env = env_builder.build_env("reset" if args.train_reset else "imitate",
                                 motion_files=[find_file(args.motion_file)],
                                 num_parallel_envs=num_procs,
                                 mode=args.mode,
+                                finetune=args.finetune,
                                 enable_randomizer=enable_env_rand,
                                 enable_rendering=args.visualize,
                                 use_real_robot=args.real,

@@ -64,9 +64,15 @@ class ImitationTask(object):
                end_effector_height_err_scale=3.0,
                root_pose_err_scale=20,
                root_velocity_err_scale=2,
+               force_weight = 0,
+               torso_weight = 0,
+               force_scale = 0.1,
+               torso_scale = 5.0,
                perturb_init_state_prob=0.0,
                tar_obs_noise=None,
-               draw_ref_model_alpha=0.5):
+               draw_ref_model_alpha=0.5,
+               _num_motors=None, # to locate lstm: lstm <- obs[-(num_motors+1)]
+               ):
     """Initializes the task.
 
     Args:
@@ -165,12 +171,24 @@ class ImitationTask(object):
     self._root_pose_weight = root_pose_weight
     self._root_velocity_weight = root_velocity_weight
 
+    self._force_weight = force_weight
+    self._torso_weight = torso_weight
+
     self._pose_err_scale = pose_err_scale
     self._velocity_err_scale = velocity_err_scale
     self._end_effector_err_scale = end_effector_err_scale
     self._end_effector_height_err_scale = end_effector_height_err_scale
     self._root_pose_err_scale = root_pose_err_scale
     self._root_velocity_err_scale = root_velocity_err_scale
+
+    self._force_scale = force_scale
+    self._torso_scale = torso_scale
+
+    # fine-tuning reward parameters
+    self.last_torque = 0. # last joint torques when lstm = 0 self._robot.GetLastTorque()
+    self.last_torso = 0 # last torso z position when lstm = 0 self._robot.GetLastTorso()
+
+    self._num_motors = _num_motors
     return
 
   def __call__(self, env):
@@ -351,11 +369,37 @@ class ImitationTask(object):
   def set_ref_state_init_prob(self, prob):
     self._ref_state_init_prob = prob
     return
+  
+  def set_weights(self, lstm):
+    """
+    Helper function to set weights
+    """
+
+    if lstm == 0:
+      self._pose_weight = 0.5
+      self._velocity_weight = 0.05
+      self._end_effector_weight = 0.2
+      self._root_pose_weight = 0.15
+      self._root_velocity_weight = 0.1
+      self._force_weight = 0
+      self._torso_weight = 0
+    else:
+      self._pose_weight = 0.2
+      self._velocity_weight = 0.01
+      self._end_effector_weight = 0.06
+      self._root_pose_weight = 0.05
+      self._root_velocity_weight = 0.03
+      self._force_weight = 0.30
+      self._torso_weight = 0.35 
 
   def reward(self, env):
     """Get the reward without side effects."""
     del env
 
+    # Added for perturbation in finetuning
+    force_reward = self._calc_reward_force()
+    torso_reward = self._calc_reward_torso()
+    
     pose_reward = self._calc_reward_pose()
     velocity_reward = self._calc_reward_velocity()
     end_effector_reward = self._calc_reward_end_effector()
@@ -366,9 +410,45 @@ class ImitationTask(object):
              + self._velocity_weight * velocity_reward \
              + self._end_effector_weight * end_effector_reward \
              + self._root_pose_weight * root_pose_reward \
-             + self._root_velocity_weight * root_velocity_reward
+             + self._root_velocity_weight * root_velocity_reward \
+             + self._force_weight * force_reward + self._torso_weight * torso_reward 
 
     return reward * self._weight
+  
+  # TODO: tuning:{_force_err_scale}
+  def _calc_reward_force(self):
+    curr_torques = self._env.robot.GetTrueMotorTorques()
+    lstm = self._env._robot_sensors[2].get_observation()[-1]
+    # lstm = self._env._get_observation()[-(self._num_motors+1)]
+    # print('lstm output: ', lstm)
+
+    self.set_weights(lstm)
+    
+    if lstm == 0: ###
+      self.last_torque = curr_torques
+      return lstm
+    else:
+      torque_err = np.linalg.norm(curr_torques - self.last_torque)
+      # print('torque error: ', torque_err)
+      return np.exp(-self._force_scale * torque_err)
+
+  def _calc_reward_torso(self):
+    # current root position and orientation
+    curr_torso = self._env.robot.GetBasePosition()[-1]
+
+    lstm = self._env._robot_sensors[2].get_observation()[-1]
+    # lstm = self._env._get_observation()[-(self._num_motors+1)]
+
+    self.set_weights(lstm)
+
+    if lstm == 0:
+      self.last_torso = curr_torso # save torso level
+      return lstm
+    else:
+      torso_err = np.linalg.norm(curr_torso - self.last_torso)
+      # print('torso error: ', torso_err)
+      return np.exp(-self._torso_scale * torso_err)
+    
 
   def _calc_reward_pose(self):
     """Get the reward for matching joint angles."""
@@ -382,6 +462,7 @@ class ImitationTask(object):
     ref_vels = self.get_active_motion().get_frame_joints_vel(self._ref_vel)
     robot_vels = self._env.robot.GetMotorVelocities()
     vel_err = robot_vels - ref_vels
+    # print('vel error: ', vel_err)
     return np.exp(-self._velocity_err_scale * vel_err.dot(vel_err))
 
   def _calc_reward_end_effector(self):
@@ -413,6 +494,7 @@ class ImitationTask(object):
           quat=self._env.robot.GetBaseOrientation())[2]
       end_eff_err += self._end_effector_height_err_scale * (
           foot_height_ref - foot_height_robot)**2
+    # print('end eff error: ', end_eff_err)
     return np.exp(-self._end_effector_err_scale * end_eff_err)
 
   def _calc_reward_end_effector_sim(self):
@@ -733,12 +815,12 @@ class ImitationTask(object):
     if self._using_real_robot:
       raise RuntimeError("Real robot cannot sync to reference motion.")
     pose = self._ref_pose
-    vel = self._ref_vel
+    vel = self._ref_velObservation
     if perturb_state:
       pose, vel = self._apply_state_perturb(pose, vel)
 
     self._set_state(self._env.robot.quadruped, pose, vel)
-    self._env.robot.ReceiveObservation()
+    self._env.robot.Receive()
     return
 
   def _set_state(self, phys_model, pose, vel):
